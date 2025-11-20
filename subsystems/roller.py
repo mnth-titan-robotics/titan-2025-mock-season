@@ -3,7 +3,7 @@ from typing import Callable
 import constants
 import rev
 
-Constants = constants.Subsystems.Roller
+Constants = constants.Roller
 
 
 class Roller(Subsystem):

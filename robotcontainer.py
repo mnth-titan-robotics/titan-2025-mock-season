@@ -4,17 +4,27 @@
 # the WPILib BSD license file in the root directory of this project.
 #
 
-import enum
-import commands2
-import constants
-from subsystems.drive import Drive
-from subsystems.roller import Roller
-from commands.auto import Auto
-from commands.game import Game
-from wpimath.kinematics import ChassisSpeeds
 
-# Create an alias to simplify usage
-cmd = commands2.cmd
+from wpimath.controller import PIDController, ProfiledPIDController
+from wpimath.geometry import Pose2d, Rotation2d, Translation2d
+from wpimath.trajectory import Trajectory, TrajectoryConfig, TrajectoryGenerator
+from subsystems.drive import DriveSubsystem
+from subsystems.roller import Roller
+from commands2 import Command, RunCommand, SwerveControllerCommand
+from commands2.button import CommandXboxController
+from commands.game import Game
+from commands.auto import Auto
+
+
+import commands2
+import wpimath
+import constants
+import enum
+
+
+ControllersReference = constants.Controllers
+DriveSubsystemReference = constants.Subsystems.Drive
+RollerSubsystemReference = constants.Roller
 
 
 class RobotContainer:
@@ -45,8 +55,8 @@ class RobotContainer:
 
     def _initSubsystems(self):
         """Initializes subsystems. Should only be called from __init__"""
-        self._drive = Drive()
-        self._roller = Roller()
+        self._robotDrive = DriveSubsystem()
+        self._robotRoller = Roller()
 
     def _initControllers(self):
         self._driverController = commands2.button.CommandXboxController(
@@ -62,16 +72,20 @@ class RobotContainer:
         self.auto = Auto(self)
 
         # Set default commands for all subsystems
-        self._drive.setDefaultCommand(
-            self._drive.driveCommand(
-                lambda: ChassisSpeeds(
-                    -self._driverController.getLeftY(),
-                    -self._driverController.getLeftX(),
-                    -self._driverController.getRightY())
+        self._robotDrive.setDefaultCommand(
+            RunCommand(
+                lambda: self._robotDrive.drive(
+                    -wpimath.applyDeadband(self._driverController.getLeftY(), ControllersReference.kDriveDeadband),
+                    -wpimath.applyDeadband(self._driverController.getLeftX(), ControllersReference.kDriveDeadband),
+                    -wpimath.applyDeadband(self._driverController.getRightX(), ControllersReference.kDriveDeadband),
+                    True
+                ),
+                self._robotDrive
             )
         )
-        self._roller.setDefaultCommand(
-            self._roller.stopCommand()
+
+        self._robotRoller.setDefaultCommand(
+            self._robotRoller.stopCommand()
         )
 
     def _initControllerBindings(self) -> None:
@@ -94,7 +108,7 @@ class RobotContainer:
         # self.driver.x().whileTrue(cmd.none())
         # self.driver.start().whileTrue(cmd.none())
         # self.driver.back().whileTrue(cmd.none())
-        self._operatorController.rightTrigger().whileTrue(self._roller.ejectCommand())
+        self._operatorController.rightTrigger().whileTrue(self._robotRoller.ejectCommand())
         # TODO: Bind the operator's left trigger to reverse
 
     def getAutonomousCommand(self) -> commands2.Command:

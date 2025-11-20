@@ -1,101 +1,74 @@
 from lib.enums import *
 from lib.classes import *
 from wpimath import units
-from wpimath.kinematics import SwerveDrive4Kinematics
-from wpimath.trajectory import TrapezoidProfile
+from wpimath.kinematics import MecanumDriveKinematics
 import math
-
-
-class NeoMotorConstants:
-    kFreeSpeedRpm: float = 5676
 
 
 class Controllers:
     DriverPort = 0
     OperatorPort = 1
-    kDriveDeadband: float = 0.05
-
-
-class ModuleConstants:
-    # The MAXSwerve module can be configured with one of three pinion gears: 12T,
-    # 13T, or 14T. This changes the drive speed of the module (a pinion gear with
-    # more teeth will result in a robot that drives faster).
-    kDrivingMotorPinionTeeth: int = 14          # Maybe change this
-
-    # Calculations required for driving motor conversion factors and feed forward
-    kDrivingMotorFreeSpeedRps: float = NeoMotorConstants.kFreeSpeedRpm / 60
-    kWheelDiameterMeters: float = 0.0762        # Maybe change this
-    kWheelCircumferenceMeters: float = kWheelDiameterMeters * math.pi
-
-    # 45 teeth on the wheel's bevel gear, 22 teeth on the first-stage spur gear, 15
-    # teeth on the bevel pinion
-    kDrivingMotorReduction: float = (45.0 * 22) / (kDrivingMotorPinionTeeth * 15)
-    kDriveWheelFreeSpeedRps: float = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters) / kDrivingMotorReduction
-
-    # Simulation constants
-    # 5-G acceleration
-    kdrivingMotorSimSlew: float = 9.8 * 5
-
-    # Treat the turning motor as free-spinning
-    kturningMotorSimSpeed: float = 31.0
-    kturningMotorSimD: float = 0.0
-
-
-class AutoConstants:
-    kMaxSpeedMetersPerSecond: float = 3
-    kMaxAccelerationMetersPerSecondSquared: float = 3
-    kMaxAngularSpeedRadiansPerSecond: float = math.pi
-    kMaxAngularSpeedRadiansPerSecondSquared: float = math.pi
-    kPXController: float = 1
-    kPYController: float = 1
-    kPThetaController: float = 1
-
-    # Constraint for the motion profiled robot angle controller
-    kThetaControllerConstraints = TrapezoidProfile.Constraints(
-    kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared)
 
 
 class Subsystems:
     class Drive:
-        # Maximum allowed speeds
-        kMaxSpeedMetersPerSecond: float = 4.8
-        kMaxAngularSpeed: float = 2.0 * math.pi
+        TrackWidth: units.meters = units.inchesToMeters(23)
+        WheelBase: units.meters = units.inchesToMeters(27.5)
 
-        # Chassis Config
-        # Distance between centers of right and left wheels on robot
-        kTrackWidth: float = units.inchesToMeters(26.5)         # CHANGE THIS WHEN CHASSIS IS REAL
+        TranslationSpeedMax: units.meters_per_second = 4.8
+        RotationSpeedMax: units.radians_per_second = 2 * math.pi  # type: ignore
 
-        # Distance between front and back wheels on robot
-        kWheelBase: float = units.inchesToMeters(26.5)          # CHANGE THIS WHEN CHASSIS IS REAL
-
-        kDriveKinematics: SwerveDrive4Kinematics = SwerveDrive4Kinematics(
-            Translation2d(kWheelBase / 2, kTrackWidth / 2),
-            Translation2d(kWheelBase / 2, kTrackWidth / 2),
-            Translation2d(kWheelBase / 2, kTrackWidth / 2),
-            Translation2d(kWheelBase / 2, kTrackWidth / 2)
+        ModuleConstants = DifferentialModuleConstants(
+            wheelDiameter=units.inchesToMeters(3.0),
+            drivingMotorControllerType=MotorControllerType.SparkMax,
+            drivingMotorCurrentLimit=50,
+            drivingMotorReduction=8.46
         )
 
-        # Angular offsets of the models relative to the chassis in radians
-        kFrontLeftChassisAngularOffset = -math.pi / 2
-        kFrontRightChassisAngularOffset = 0
-        kRearLeftChassisAngularOffset = math.pi
-        kRearRightChassisAngularOffset = math.pi / 2
+        # Each wheel is a "module", with CAN ids
+        ModuleConfigs = (
+            DifferentialModuleConfig(
+                location=ModuleLocation.LeftFront,
+                drivingMotorCANId=10,
+                isInverted=False,
+                constants=ModuleConstants),
+            DifferentialModuleConfig(
+                location=ModuleLocation.LeftRear,
+                drivingMotorCANId=11,
+                isInverted=False,
+                constants=ModuleConstants),
+            DifferentialModuleConfig(
+                location=ModuleLocation.RightFront,
+                drivingMotorCANId=12,
+                isInverted=True,
+                constants=ModuleConstants),
+            DifferentialModuleConfig(
+                location=ModuleLocation.RightRear,
+                drivingMotorCANId=13,
+                isInverted=True,
+                constants=ModuleConstants)
+        )
 
-        # SPARK MAX CAN IDs
-        kFrontLeftDrivingCanId: int = 11
-        kRearLeftDrivingCanId: int = 13
-        kFrontRightDrivingCanId: int = 15
-        kRearRightDrivingCanId: int = 17
+        # Kinematics provide a model of how the robot will move based on wheel motion.
+        # DifferentialDriveKinematics - aka: "Tank Drive"
+        # MecanumDriveKinematics - Wheel can only rotate axially, diagonal rollers allow moving side-to-side
+        # SwerveDrive4Kinematics - Wheels can rotate (like shopping cart wheels), move forward and backward.
+        Kinematics = MecanumDriveKinematics(
+            Translation2d(WheelBase / 2.0, TrackWidth / 2.0),
+            Translation2d(WheelBase / 2.0, -TrackWidth / 2.0),
+            Translation2d(-WheelBase / 2.0, TrackWidth / 2.0),
+            Translation2d(-WheelBase / 2.0, -TrackWidth / 2.0)
+        )
 
-        kFrontLeftTurningCanId: int = 10
-        kRearLeftTurningCanId: int = 12
-        kFrontRightTurningCanId: int = 14
-        kRearRightTurningCanId: int = 16
+        # TODO: Tune these PID values
+        TranslationPID = PID(1.0, 0.0, 0.0)
+        RotationPID = PID(1.0, 0.0, 0.0)
 
-        kGyroReversed: bool = False
+        MaxVelocity = 15
+        MaxAcceleration = 3
 
     class Roller:
-        MotorId = 9
+        MotorId = 15
         MotorCurrentLimit = 20
         MotorVComp = 10
         EjectSpeed = 1.0

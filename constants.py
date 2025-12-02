@@ -39,15 +39,15 @@ class Subsystems:
         kRearRightChassisAngularOffset = math.pi / 2
 
         # SPARK MAX CAN IDs
-        kFrontLeftDrivingCanId: int = 2
+        kFrontLeftDrivingCanId: int = 1
         kRearLeftDrivingCanId: int = 3
-        kFrontRightDrivingCanId: int = 4
-        kRearRightDrivingCanId: int = 5
+        kFrontRightDrivingCanId: int = 2
+        kRearRightDrivingCanId: int = 4
 
-        kFrontLeftTurningCanId: int = 6
+        kFrontLeftTurningCanId: int = 5
         kRearLeftTurningCanId: int = 7
-        kFrontRightTurningCanId: int = 8
-        kRearRightTurningCanId: int = 9
+        kFrontRightTurningCanId: int = 6
+        kRearRightTurningCanId: int = 8
 
         kGyroReversed: bool = False
 
@@ -90,7 +90,7 @@ class AutoConstants:
 
 
 class Roller:
-    MotorId = 1
+    MotorId = 9
     MotorCurrentLimit = 20
     MotorVComp = 10
     EjectSpeed = 1.0

@@ -56,9 +56,8 @@ class MAXSwerveModule:
     :return: The current position of the module. 
     """
     # Apply chassis angular offset to the encoder position to get the position
-    return SwerveModulePosition(
-      self._drivingEncoder.getPosition(),
-      Rotation2d(self._turningEncoder.getPosition() - self._chassisAngularOffset))
+    return SwerveModulePosition(self._drivingEncoder.getPosition(),
+                            Rotation2d(self._turningEncoder.getPosition() - self._chassisAngularOffset))
 
   def setDesiredState(self, desiredState: SwerveModuleState) -> None:
     """
@@ -71,7 +70,12 @@ class MAXSwerveModule:
     correctedDesiredState.angle = desiredState.angle + Rotation2d(self._chassisAngularOffset)
 
     # Optimize the reference state to avoid spinning further than 90 degrees.
-    correctedDesiredState.optimize(Rotation2d(self._turningEncoder.getPosition()))
+
+    # optimize is being not optimal
+    #correctedDesiredState.optimize(Rotation2d(self._turningEncoder.getPosition() - self._chassisAngularOffset))
+    
+    #   Adding - self._chassisAngularOffset inside the Rotation2d of the above function did not make it start working
+    #     instead, front left, front right, rear right spin similar to each other, while rear left spins chaotically on its own
 
     # Command driving and turning SPARKS towards their respective setpoints.
     self._drivingClosedLoopController.setReference(correctedDesiredState.speed, SparkMax.ControlType.kVelocity)

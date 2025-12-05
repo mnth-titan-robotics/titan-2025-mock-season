@@ -19,7 +19,7 @@ class NeoMotorConstants:
 
 class Subsystems:
     class Drive:
-        kMaxSpeedMetersPerSecond: float = 4.8
+        kMaxSpeedMetersPerSecond: float = 0.5
         kMaxAngularSpeed: float = 2.0 * math.pi
 
         kTrackWidth: units.meters = units.inchesToMeters(26.5)

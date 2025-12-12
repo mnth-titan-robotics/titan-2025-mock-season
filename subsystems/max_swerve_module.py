@@ -64,22 +64,13 @@ class MAXSwerveModule:
     Sets the desired state for the module.
     :param desiredState: Desired state with speed and angle.
     """
-    # Apply chassis angular offset to the desired state.
-    correctedDesiredState = SwerveModuleState()
-    correctedDesiredState.speed = desiredState.speed
-    correctedDesiredState.angle = desiredState.angle + Rotation2d(self._chassisAngularOffset)
-
-    # Optimize the reference state to avoid spinning further than 90 degrees.
-
-    # optimize is being not optimal
-    #correctedDesiredState.optimize(Rotation2d(self._turningEncoder.getPosition() - self._chassisAngularOffset))
-    
-    #   Adding - self._chassisAngularOffset inside the Rotation2d of the above function did not make it start working
-    #     instead, front left, front right, rear right spin similar to each other, while rear left spins chaotically on its own
-
-    # Command driving and turning SPARKS towards their respective setpoints.
-    self._drivingClosedLoopController.setReference(correctedDesiredState.speed, SparkMax.ControlType.kVelocity)
-    self._turningClosedLoopController.setReference(correctedDesiredState.angle.radians(), SparkMax.ControlType.kPosition)
+    # Copied code from Lady Cans, it doesn't break anything but it certainly acts strangely
+    currentAngle = Rotation2d(self._turningEncoder.getPosition())
+    desiredState.angle += Rotation2d(self._chassisAngularOffset)
+    desiredState.optimize(currentAngle)
+    desiredState.cosineScale(currentAngle)
+    self._drivingClosedLoopController.setReference(desiredState.speed, SparkBase.ControlType.kVelocity)
+    self._turningClosedLoopController.setReference(desiredState.angle.radians(), SparkBase.ControlType.kPosition)
 
     self._desiredState = desiredState
 

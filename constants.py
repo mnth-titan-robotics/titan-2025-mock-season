@@ -10,7 +10,7 @@ import math
 class Controllers:
     DriverPort = 0
     OperatorPort = 1
-    kDriveDeadband: float = 0.05
+    kDriveDeadband: float = 0.1
 
 
 class NeoMotorConstants:
@@ -40,13 +40,13 @@ class Subsystems:
 
         # SPARK MAX CAN IDs
         kFrontLeftDrivingCanId: int = 1
-        kRearLeftDrivingCanId: int = 3
-        kFrontRightDrivingCanId: int = 2
-        kRearRightDrivingCanId: int = 4
+        kRearLeftDrivingCanId: int = 5
+        kFrontRightDrivingCanId: int = 3
+        kRearRightDrivingCanId: int = 7
 
-        kFrontLeftTurningCanId: int = 5
-        kRearLeftTurningCanId: int = 7
-        kFrontRightTurningCanId: int = 6
+        kFrontLeftTurningCanId: int = 2
+        kRearLeftTurningCanId: int = 6
+        kFrontRightTurningCanId: int = 4
         kRearRightTurningCanId: int = 8
 
         kGyroReversed: bool = False

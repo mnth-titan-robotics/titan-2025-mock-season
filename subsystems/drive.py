@@ -4,9 +4,9 @@
 # the WPILib BSD license file in the root directory of this project.
 #
 
-from rev import SparkMax
 from wpimath.geometry import Rotation2d, Pose2d
-from wpimath.kinematics import ChassisSpeeds, SwerveModulePosition, SwerveModuleState, SwerveDrive4Odometry, SwerveDrive4Kinematics
+from wpimath.kinematics import ChassisSpeeds, SwerveModuleState, SwerveDrive4Odometry, SwerveDrive4Kinematics
+from wpimath import units
 from commands2 import Subsystem
 from .max_swerve_module import MAXSwerveModule
 from wpilib import ADIS16470_IMU
@@ -139,6 +139,19 @@ class DriveSubsystem(Subsystem):
     self._frontRight.setDesiredState(swerveModuleStates[1])
     self._rearLeft.setDesiredState(swerveModuleStates[2])
     self._rearRight.setDesiredState(swerveModuleStates[3])
+
+  def autoDrive(self, xOffset: units.inches, yOffset: units.inches, rotation: units.degrees):
+    """
+    Method to drive the robot using distance and direction
+    :param xOffset: Distance to travel in the x direction (forward).
+    :param yOffset: Distance to travel in the y direction (sideways).
+    :param rotation: Degrees that the robot will turn.
+    """
+    # Get current position of robot
+    # Calculate future position of robot
+    # Get robot over there
+    # Check if robot is at future position within tolerance
+    pass
 
   def setX(self) -> None:
     """

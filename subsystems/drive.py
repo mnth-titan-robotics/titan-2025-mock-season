@@ -4,7 +4,7 @@
 # the WPILib BSD license file in the root directory of this project.
 #
 
-from wpimath.geometry import Rotation2d, Pose2d
+from wpimath.geometry import Rotation2d, Pose2d, Transform2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState, SwerveDrive4Odometry, SwerveDrive4Kinematics
 from wpimath import units
 from commands2 import Subsystem
@@ -147,11 +147,49 @@ class DriveSubsystem(Subsystem):
     :param yOffset: Distance to travel in the y direction (sideways).
     :param rotation: Degrees that the robot will turn.
     """
-    # Get current position of robot
-    # Calculate future position of robot
-    # Get robot over there
+    # Get current position
+    current_position = self.getPose()
+
+    # Calculate future position via transformation and rotation
+    transform_offset = Transform2d()
+    transform_offset.x = xOffset
+    transform_offset.y = yOffset
+
+    rotation_offset = Rotation2d(units.degreesToRadians(rotation))
+
+    # Create new position that represents the future position
+    future_position = current_position
+    future_position = future_position.transformBy(transform_offset)
+    future_position = future_position.rotateBy(rotation_offset)
+
+    # Get robot to future position        units = meters per second, radians per second
+    time_to_move = units.seconds(5)     # this is questionable but idk a better solution right now
+    velocity_x = units.meters_per_second(units.inchesToMeters(xOffset) / time_to_move)
+    velocity_y = units.meters_per_second(units.inchesToMeters(yOffset) / time_to_move)
+    omega = units.radians_per_second(units.degreesToRadians(rotation) / time_to_move)
+
+    chassis_speeds = ChassisSpeeds(velocity_x, velocity_y, omega)
+    swerve_module_states = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassis_speeds)
+
+    self.setModuleStates(swerve_module_states)
+
     # Check if robot is at future position within tolerance
-    pass
+    tolerance_inches = units.inches(1)
+    tolerance_degrees = units.degrees(1)
+    current_position = self.getPose()
+
+    real_x = units.metersToInches(current_position.X())
+    real_y = units.metersToInches(current_position.Y())
+    real_rot = units.degrees(current_position.rotation().degrees())
+
+    target_x = units.metersToInches(future_position.X())
+    target_y = units.metersToInches(future_position.Y())
+    target_rot = units.degrees(future_position.rotation().degrees())
+
+    print("Autonomous Driving Completed!\nResults:")
+    print(f"Target X = {target_x}\t\t\tReal X = {real_x}")
+    print(f"Target Y = {target_y}\t\t\tReal Y = {real_y}")
+    print(f"Target Rotation = {target_rot}\t\t\tReal Rotation = {real_rot}")
 
   def setX(self) -> None:
     """
